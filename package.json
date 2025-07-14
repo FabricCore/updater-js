@@ -1,17 +1,17 @@
 {
   "name": "updater",
   "version": "0.1.0",
-  "description": "Hello JSCore!",
+  "description": "Notify you when there is an update.",
   "keywords": [],
   "license": "LGPL-3.0-or-later",
   "author": {
-    "name": "Your Name",
-    "email": "yourname@domain.com",
-    "url": "https://example.com"
+    "name": "Sirius",
+    "email": "sirius@siri.ws",
+    "url": "https://siri.ws"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourname/reponame-js"
+    "url": "https://github.com/fabriccore/updater-js"
   },
   "dependencies": {
     "rinode": "0.1.0",
