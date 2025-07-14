@@ -40,7 +40,7 @@ function check(upToDate = () => {}) {
 
             if (outdated.length != 0)
                 console.warn(
-                    `You have ${outdated.length} outdated packages, run \`/pully install\` to update.`,
+                    `You have ${outdated.length} outdated package${outdated.length < 2 ? "" : "s"}, run \`/pully install\` to update.`,
                 );
         }
 
