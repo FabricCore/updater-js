@@ -1,0 +1,24 @@
+{
+  "name": "updater",
+  "version": "0.1.0",
+  "description": "Hello JSCore!",
+  "keywords": [],
+  "license": "LGPL-3.0-or-later",
+  "author": {
+    "name": "Your Name",
+    "email": "yourname@domain.com",
+    "url": "https://example.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourname/reponame-js"
+  },
+  "dependencies": {
+    "rinode": "0.1.0",
+    "pully": "0.1.0",
+    "listener": "0.1.0",
+    "yarn-extra": "0.1.0",
+    "fabric-api-events": "0.1.0",
+    "command": "0.1.0"
+  }
+}
