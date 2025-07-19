@@ -2,6 +2,9 @@ let fs = require("fs");
 let { fetchSync } = require("fetch");
 
 function checkUpdateSync(hasUpdate, noUpdate) {
+    module.globals.updater ??= {};
+    module.globals.updater.lastChecked ??= Date.now();
+
     hasUpdate ??= () => {};
     noUpdate ??= () => {};
 

@@ -125,7 +125,13 @@ function check(upToDate = () => {}) {
     });
 }
 
-check();
+// cooldown 5 mins to not hit the github api rate limit
+if (
+    module.globals.updater == undefined ||
+    Date.now() - (module.globals.updater.lastChecked ?? 0) > 300000
+) {
+    check();
+}
 
 command.register({
     name: "updater",
