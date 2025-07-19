@@ -1,6 +1,6 @@
 {
   "name": "updater",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Notify you when there is an update.",
   "keywords": [],
   "license": "LGPL-3.0-or-later",

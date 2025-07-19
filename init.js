@@ -7,6 +7,7 @@ let { waitUntil } = require("listener");
 let { checkUpdate, checkUpdateSync } = module.require("./");
 
 let client = Yarn.net.minecraft.client.MinecraftClient.getInstance();
+let loader = Packages.net.fabricmc.loader.api.FabricLoader.getInstance();
 
 function notify() {
     console.info("There is an update avaiable.");
@@ -27,7 +28,69 @@ function check(upToDate = () => {}) {
 
         let outdated = pully.getOutdatedSync(index, localManifests);
 
-        if (!hasUpdate && outdated.length == 0) {
+        function shouldUpdate(local, remote) {
+            let currentVersion = local.split(".").map((n) => parseInt(n));
+            let newVersion = remote.split(".").map((n) => parseInt(n));
+            for (
+                let i = 0;
+                i < Math.min(currentVersion.length, newVersion.length);
+                i++
+            ) {
+                if (currentVersion[i] > newVersion[i]) return false;
+                if (currentVersion[i] < newVersion[i]) return true;
+            }
+
+            return currentVersion.length < newVersion.length;
+        }
+
+        let gameVersion = client.getGameVersion();
+
+        function modVersions(name) {
+            let local =
+                loader
+                    .getModContainer(name)
+                    .get()
+                    .getMetadata()
+                    .getVersion()
+                    .getFriendlyString() + "";
+
+            try {
+                let remote = fetchSync(
+                    `https://api.modrinth.com/v2/project/${name}/version?game_versions=[%22${gameVersion}%22]`,
+                ).json();
+                return [local, remote];
+            } catch {
+                return [local, "0.0.0"];
+            }
+        }
+
+        let [jscVersion, remoteJscVersions] = modVersions("jscore");
+        let [yarnwrapVersion, remoteYarnwrapVersions] = modVersions("yarnwrap");
+
+        let jscUpdate;
+        if (remoteJscVersions.length != 0) {
+            let remoteVersion = remoteJscVersions[0].version_number;
+            if (shouldUpdate(jscVersion, remoteVersion)) {
+                jscUpdate = [jscVersion, remoteVersion];
+                hasUpdate = true;
+            }
+        }
+
+        let yarnwrapUpdate;
+        if (remoteJscVersions.length != 0) {
+            let remoteVersion = remoteYarnwrapVersions[0].version_number;
+            if (shouldUpdate(yarnwrapVersion, remoteVersion)) {
+                yarnwrapUpdate = [yarnwrapVersion, remoteVersion];
+                hasUpdate = true;
+            }
+        }
+
+        if (
+            !hasUpdate &&
+            outdated.length == 0 &&
+            jscUpdate == undefined &&
+            yarnwrapUpdate == undefined
+        ) {
             upToDate();
             return;
         }
@@ -41,6 +104,16 @@ function check(upToDate = () => {}) {
             if (outdated.length != 0)
                 console.warn(
                     `You have ${outdated.length} outdated package${outdated.length < 2 ? "" : "s"}, run \`/pully install\` to update.`,
+                );
+
+            if (jscUpdate)
+                console.warn(
+                    `There is a newer version of JSCore: ${jscUpdate[0]} -> ${jscUpdate[1]}}`,
+                );
+
+            if (yarnwrapUpdate)
+                console.warn(
+                    `There is a newer version of Yarnwrap: ${yarnwrapUpdate[0]} -> ${yarnwrapUpdate[1]}}`,
                 );
         }
 
