@@ -2,6 +2,8 @@ let fs = require("fs");
 let command = require("command");
 let { fetchSync } = require("fetch");
 let pully = require("pully");
+let text = require("text");
+let config = require("config");
 
 let { waitUntil } = require("listener");
 let { checkUpdate, checkUpdateSync } = module.require("./");
@@ -9,17 +11,18 @@ let { checkUpdate, checkUpdateSync } = module.require("./");
 let client = Yarn.net.minecraft.client.MinecraftClient.getInstance();
 let loader = Packages.net.fabricmc.loader.api.FabricLoader.getInstance();
 
-function notify() {
-    console.info("There is an update avaiable.");
-    console.info("Run `/updater pull` to update init scripts.");
-}
+let warn = "\u00A78[\u00A7e\u00A7lWARN\u00A78]";
 
 function check(upToDate = () => {}) {
     Promise(() => {
         let hasUpdate;
+        let initScriptUpdate;
 
         checkUpdateSync(
-            () => (hasUpdate = true),
+            () => {
+                hasUpdate = true;
+                initScriptUpdate = true;
+            },
             () => (hasUpdate = false),
         );
 
@@ -96,25 +99,51 @@ function check(upToDate = () => {}) {
         }
 
         function notify() {
-            if (hasUpdate)
-                console.warn(
-                    "Your init scripts are out of date, run `/updater pull` to update.",
-                );
+            if (initScriptUpdate)
+                text.sendText([
+                    warn,
+                    "Your init scripts are out of date, run ",
+                    {
+                        content: "\u00A7a/updater pull",
+                        hover: "Run command \u00a7a/updater pull",
+                        click: "/updater pull",
+                    },
+                    " to update.",
+                ]);
 
             if (outdated.length != 0)
-                console.warn(
-                    `You have ${outdated.length} outdated package${outdated.length < 2 ? "" : "s"}, run \`/pully install\` to update.`,
-                );
+                text.sendText([
+                    warn,
+                    `You have ${outdated.length} outdated package${outdated.length < 2 ? "" : "s"}, run `,
+                    {
+                        content: "\u00A7a/pully install",
+                        hover: "Run command \u00a7a/pully install",
+                        click: "/updater pull",
+                    },
+                    " to update.",
+                ]);
 
             if (jscUpdate)
-                console.warn(
-                    `There is a newer version of JSCore: ${jscUpdate[0]} -> ${jscUpdate[1]}}`,
-                );
+                text.sendText([
+                    warn,
+                    `There is a newer version of JSCore! \u00A7c${jscUpdate[0]}\u00A7r \u00A77> \u00A7a${jscUpdate[1]} `,
+                    {
+                        content: "\u00A78[\u00A7e\u00A7lModrinth\u00A78]",
+                        hover: "Open in Modrinth",
+                        click: "https://modrinth.com/mod/jscore",
+                    },
+                ]);
 
             if (yarnwrapUpdate)
-                console.warn(
-                    `There is a newer version of Yarnwrap: ${yarnwrapUpdate[0]} -> ${yarnwrapUpdate[1]}}`,
-                );
+                text.sendText([
+                    warn,
+                    `There is a newer version of JSCore! \u00A7c${yarnwrapUpdate[0]}\u00A7r \u00A77> \u00A7a${yarnwrapUpdate[1]} `,
+                    {
+                        content: "\u00A78[\u00A7e\u00A7lModrinth\u00A78]",
+                        hover: "Open in Modrinth",
+                        click: "https://modrinth.com/mod/yarnwrap",
+                    },
+                ]);
         }
 
         if (client.player == null) {
@@ -125,11 +154,27 @@ function check(upToDate = () => {}) {
     });
 }
 
-// cooldown 5 mins to not hit the github api rate limit
-if (
-    module.globals.updater == undefined ||
-    Date.now() - (module.globals.updater.lastChecked ?? 0) > 300000
-) {
+let options;
+
+function getOptions(forced) {
+    options = config.load("updater") ?? {};
+    options.interval ??= 10800;
+    Math.max(Math.min(259200, options.interval), 0);
+    options.lastChecked ??= 0;
+
+    let now = Math.floor(Date.now() / 1000);
+    options.lastChecked = Math.min(options.lastChecked, now);
+    let shouldCheck = now - options.lastChecked > options.interval;
+
+    if (shouldCheck || forced) {
+        options.lastChecked = now;
+    }
+    config.save("updater", options);
+
+    return shouldCheck;
+}
+
+if (getOptions()) {
     check();
 }
 
@@ -138,10 +183,12 @@ command.register({
 
     subcommands: {
         check: {
-            execute: () =>
+            execute: () => {
+                getOptions(true);
                 check(() => {
                     console.info("Your game is up to date. Yay!");
-                }),
+                });
+            },
         },
         pull: {
             execute: () => {
